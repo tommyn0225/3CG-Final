@@ -140,6 +140,15 @@ function Game:nextPhase()
                         table.remove(self.board.slots[pid][loc], i)
                         self.gameLog:addEntry(string.format("%s's Helios is discarded", 
                             pid == 1 and "Player" or "Enemy"))
+                    elseif card.def.id == "sword_of_damocles" then
+                        -- Check if Sword of Damocles is not winning its location
+                        local sourcePower = self.board:totalPower(pid, loc)
+                        local targetPower = self.board:totalPower(pid == 1 and 2 or 1, loc)
+                        if sourcePower <= targetPower then
+                            card:addPower(-1)
+                            self.gameLog:addEntry(string.format("%s's Sword of Damocles loses 1 power (now %d)", 
+                                pid == 1 and "Player" or "Enemy", card.power))
+                        end
                     end
                 end
             end
