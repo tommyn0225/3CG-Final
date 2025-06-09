@@ -65,11 +65,49 @@ function UI:mousepressed(x, y, button)
     end
 
     if Game.state == "menu" then
-        local bw, bh = w * 0.3, h * 0.1
-        local bx, by = (w - bw) / 2, h * 0.5
+        lg.setColor(0,0,0); lg.rectangle('fill',0,0,w,h)
+        lg.setColor(1,1,1); lg.printf("Mythic Clash",0,h*0.3,w,'center')
+        
+        -- Play button
+        local bw, bh = w*0.3, h*0.1
+        local bx, by = (w-bw)/2, h*0.5
+        lg.setColor(0.8,0.8,0.8); lg.rectangle('fill',bx,by,bw,bh,10,10)
+        lg.setColor(0,0,0); lg.printf("Play",bx,by+(bh-24)/2,bw,'center')
+        
+        -- Deck Maker button
+        local deckMakerY = by + bh + 20
+        lg.setColor(0.8,0.8,0.8); lg.rectangle('fill',bx,deckMakerY,bw,bh,10,10)
+        lg.setColor(0,0,0); lg.printf("Deck Maker",bx,deckMakerY+(bh-24)/2,bw,'center')
+
+        -- Play button
         if x >= bx and x <= bx + bw and y >= by and y <= by + bh then
             Game:init()
             Game.state = "staging"
+            return
+        end
+        
+        -- Deck Maker button
+        if x >= bx and x <= bx + bw and y >= deckMakerY and y <= deckMakerY + bh then
+            Game.state = "deckmaker"
+            return
+        end
+        return
+    end
+
+    if Game.state == "deckmaker" then
+        lg.setColor(0,0,0); lg.rectangle('fill',0,0,w,h)
+        lg.setColor(1,1,1); lg.printf("Deck Maker",0,h*0.1,w,'center')
+        
+        -- Back button
+        local bw, bh = w*0.2, h*0.08
+        local bx, by = 20, 20
+        lg.setColor(0.8,0.8,0.8); lg.rectangle('fill',bx,by,bw,bh,10,10)
+        lg.setColor(0,0,0); lg.printf("Back",bx,by+(bh-24)/2,bw,'center')
+
+        -- Back button
+        if x >= bx and x <= bx + bw and y >= by and y <= by + bh then
+            Game.state = "menu"
+            return
         end
         return
     end
