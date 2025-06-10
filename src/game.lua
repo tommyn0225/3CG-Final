@@ -7,19 +7,27 @@ local Player    = require "src/player"
 local Board     = require "src/board"
 local AI        = require "src/ai"
 local GameLog   = require "src/game_log"
+local Deck      = require "src/deck"
 
 function Game:init()
-    self.players     = { Player.new(1, false), Player.new(2, true) }
-    self.board       = Board.new()
-    self.turn        = 1
-    self.state       = "staging"
-    self.targetScore = constants.TARGET_SCORE
-    self.gameLog     = GameLog.new()
-
+    -- Initialize basic game state
+    self.state = "menu"
+    self.gameLog = GameLog.new()
+    self.discardedThisTurn = false
+    
     -- Preload all card images
     for _, def in ipairs(constants.CARD_DEFS) do
         def.image = love.graphics.newImage("src/assets/images/" .. def.id .. ".png")
     end
+end
+
+function Game:startGame()
+    self.players = { Player.new(1, false), Player.new(2, true) }
+    self.board = Board.new()
+    self.turn = 1
+    self.state = "staging"
+    self.targetScore = constants.TARGET_SCORE
+    self.discardedThisTurn = false
 
     -- Deal starting hands, set initial mana
     for _, p in ipairs(self.players) do
@@ -28,6 +36,38 @@ function Game:init()
     end
     
     self.gameLog:addEntry("Game started!")
+end
+
+function Game:initWithCustomDeck(deckCounts)
+    self.players = { Player.new(1, false), Player.new(2, true) }
+    self.board = Board.new()
+    self.turn = 1
+    self.state = "staging"
+    self.targetScore = constants.TARGET_SCORE
+    self.discardedThisTurn = false
+
+    -- Build custom deck for player 1
+    local customDeck = {}
+    for id, count in pairs(deckCounts) do
+        for i = 1, count do
+            -- Find the card definition
+            for _, def in ipairs(constants.CARD_DEFS) do
+                if def.id == id then
+                    table.insert(customDeck, def)
+                    break
+                end
+            end
+        end
+    end
+    self.players[1].deck = Deck.new(customDeck)
+
+    -- Deal starting hands, set initial mana
+    for _, p in ipairs(self.players) do
+        p:drawStartingHand()
+        p.mana = self.turn
+    end
+    
+    self.gameLog:addEntry("Game started with custom deck!")
 end
 
 function Game:getPhaseText()
@@ -47,10 +87,15 @@ function Game:nextPhase()
         for pid = 1, 2 do
             for loc = 1, 3 do
                 for _, c in ipairs(self.board.slots[pid][loc]) do
-                    c:flip(false)
+                    if c then
+                        c:flip(false)  -- Flip all cards face down
+                    end
                 end
             end
         end
+        
+        -- Reset discard flag for next turn
+        self.discardedThisTurn = false
         
         -- AI stages its play
         self.state = "enemy"
@@ -79,25 +124,30 @@ function Game:nextPhase()
             self.gameLog:addEntry(string.format("Location %d: %s reveals first (Power: %d vs %d)", 
                 loc, winner == 1 and "Player" or "Enemy", p1Power, p2Power))
             
-            -- Flip all cards face up for both players
+            -- First, flip all cards face up
             for pid = 1, 2 do
                 for _, c in ipairs(self.board.slots[pid][loc]) do
-                    c:flip(true)
-                    self.gameLog:addEntry(string.format("%s reveals %s", 
-                        pid == 1 and "Player" or "Enemy", c.def.name))
-                    
-                    -- Immediately trigger abilities for winner's cards
-                    if pid == winner and c.def.ability then
-                        self.gameLog:addEntry(string.format("%s's %s ability triggers", 
+                    if c then
+                        c:flip(true)  -- Flip all cards face up
+                        self.gameLog:addEntry(string.format("%s reveals %s", 
                             pid == 1 and "Player" or "Enemy", c.def.name))
-                        c:applyTrigger("onReveal", self, {location=loc})
                     end
                 end
             end
             
-            -- Then trigger abilities for loser's cards
+            -- Then trigger abilities in order:
+            -- 1. Winner's cards first
+            for _, c in ipairs(self.board.slots[winner][loc]) do
+                if c and c.def.ability then
+                    self.gameLog:addEntry(string.format("%s's %s ability triggers", 
+                        winner == 1 and "Player" or "Enemy", c.def.name))
+                    c:applyTrigger("onReveal", self, {location=loc})
+                end
+            end
+            
+            -- 2. Loser's cards second
             for _, c in ipairs(self.board.slots[loser][loc]) do
-                if c.def.ability then
+                if c and c.def.ability then
                     self.gameLog:addEntry(string.format("%s's %s ability triggers", 
                         loser == 1 and "Player" or "Enemy", c.def.name))
                     c:applyTrigger("onReveal", self, {location=loc})
@@ -105,7 +155,7 @@ function Game:nextPhase()
             end
         end
 
-        -- Scoring
+        -- Move to scoring phase
         self.state = "scoring"
         for loc = 1, 3 do
             local p1 = self.board:totalPower(1, loc)
@@ -134,20 +184,22 @@ function Game:nextPhase()
             for loc = 1, 3 do
                 for i = #self.board.slots[pid][loc], 1, -1 do
                     local card = self.board.slots[pid][loc][i]
-                    if card.def.id == "helios" then
-                        -- Discard Helios
-                        self.players[pid].deck:discard(card)
-                        table.remove(self.board.slots[pid][loc], i)
-                        self.gameLog:addEntry(string.format("%s's Helios is discarded", 
-                            pid == 1 and "Player" or "Enemy"))
-                    elseif card.def.id == "sword_of_damocles" then
-                        -- Check if Sword of Damocles is not winning its location
-                        local sourcePower = self.board:totalPower(pid, loc)
-                        local targetPower = self.board:totalPower(pid == 1 and 2 or 1, loc)
-                        if sourcePower <= targetPower then
-                            card:addPower(-1)
-                            self.gameLog:addEntry(string.format("%s's Sword of Damocles loses 1 power (now %d)", 
-                                pid == 1 and "Player" or "Enemy", card.power))
+                    if card and card.def then
+                        if card.def.id == "helios" then
+                            -- Discard Helios
+                            self.players[pid].deck:discard(card)
+                            table.remove(self.board.slots[pid][loc], i)
+                            self.gameLog:addEntry(string.format("%s's Helios is discarded", 
+                                pid == 1 and "Player" or "Enemy"))
+                        elseif card.def.id == "sword_of_damocles" then
+                            -- Check if Sword of Damocles is not winning its location
+                            local sourcePower = self.board:totalPower(pid, loc)
+                            local targetPower = self.board:totalPower(pid == 1 and 2 or 1, loc)
+                            if sourcePower <= targetPower then
+                                card:addPower(-1)
+                                self.gameLog:addEntry(string.format("%s's Sword of Damocles loses 1 power (now %d)", 
+                                    pid == 1 and "Player" or "Enemy", card.power))
+                            end
                         end
                     end
                 end
@@ -158,9 +210,11 @@ function Game:nextPhase()
         for _, p in ipairs(self.players) do
             for loc = 1, 3 do
                 for _, c in ipairs(self.board.slots[p.id][loc]) do
-                    p.deck:discard(c)
-                    self.gameLog:addEntry(string.format("%s's %s is discarded", 
-                        p.id == 1 and "Player" or "Enemy", c.def.name))
+                    if c then
+                        p.deck:discard(c)
+                        self.gameLog:addEntry(string.format("%s's %s is discarded", 
+                            p.id == 1 and "Player" or "Enemy", c.def.name))
+                    end
                 end
                 self.board.slots[p.id][loc] = {}
             end
@@ -169,30 +223,25 @@ function Game:nextPhase()
                 p.id == 1 and "Player" or "Enemy"))
         end
 
-        self.turn = self.turn + 1
-        for _, p in ipairs(self.players) do
-            -- Apply Apollo's mana bonus
-            p.mana = self.turn + (p.nextTurnMana or 0)
-            if p.nextTurnMana and p.nextTurnMana > 0 then
-                self.gameLog:addEntry(string.format("%s gains +%d mana from Apollo", 
-                    p.id == 1 and "Player" or "Enemy", p.nextTurnMana))
+        -- Check for game over
+        if self.players[1].score >= self.targetScore or self.players[2].score >= self.targetScore then
+            self.state = "gameover"
+            if self.players[1].score > self.players[2].score then
+                self.gameLog:addEntry("Player wins the game!")
+            elseif self.players[2].score > self.players[1].score then
+                self.gameLog:addEntry("Enemy wins the game!")
+            else
+                self.gameLog:addEntry("The game ends in a tie!")
             end
-            p.nextTurnMana = 0
-        end
-
-        -- Check win
-        for _, p in ipairs(self.players) do
-            if p.score >= self.targetScore then
-                self.state = "gameover"
-                self.gameLog:addEntry(string.format("%s wins the game!", 
-                    p.id == 1 and "Player" or "Enemy"))
-                return
+        else
+            -- Start next turn
+            self.turn = self.turn + 1
+            for _, p in ipairs(self.players) do
+                p.mana = self.turn
             end
+            self.state = "staging"
+            self.gameLog:addEntry(string.format("Turn %d begins", self.turn))
         end
-
-        self.state = "staging"
-        require("src/ui").discardedThisTurn = false
-        self.gameLog:addEntry(string.format("Turn %d begins", self.turn))
     end
 end
 
@@ -200,8 +249,10 @@ function Game:update(dt)
 end
 
 function Game:draw()
-    require("src/ui"):draw()
-    self.gameLog:draw()
+    if self.state ~= "deckbuilder" then
+        require("src/ui"):draw()
+        self.gameLog:draw()
+    end
 end
 
 return Game

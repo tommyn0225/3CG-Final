@@ -15,11 +15,14 @@ end
 -- Midas: Set ALL cards in the same location to 3 power
 function abilities.midas(game, sourcePlayer, targetPlayer, sourceCard, context)
     local loc = context.location
-    for _, card in ipairs(game.board.slots[sourcePlayer.id][loc]) do
-        if card.setPower then
-            card:setPower(3)
-        else
-            card.power = 3
+    -- Set all cards in the location to 3 power
+    for pid = 1, 2 do
+        for _, card in ipairs(game.board.slots[pid][loc]) do
+            if card.setPower then
+                card:setPower(3)
+            else
+                card.power = 3
+            end
         end
     end
 end
@@ -107,6 +110,8 @@ function abilities.daedalus(game, sourcePlayer, targetPlayer, sourceCard, contex
     for _, def in ipairs(require("src/constants").CARD_DEFS) do
         if def.id == "wooden_cow" then cowDef = def break end
     end
+    if not cowDef then return end
+    
     for loc = 1, 3 do
         if loc ~= currentLoc and #game.board.slots[sourcePlayer.id][loc] < game.board.maxSlots then
             local newCow = Card.new(cowDef)
