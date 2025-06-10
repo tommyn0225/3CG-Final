@@ -14,7 +14,7 @@ constants.CARD_DEFS = {
     { id="midas",      name="Midas",      cost=8, power=2, text="When Revealed: Set ALL cards here to 3 power.", ability="midas" },
     { id="aphrodite",  name="Aphrodite",  cost=6, power=3, text="When Revealed: Lower the power of each enemy card here by 1.", ability="aphrodite" },
     { id="athena",     name="Athena",     cost=6, power=2, text="Gain +1 power when you play another card here.", ability="athena" },
-    { id="apollo",     name="Apollo",     cost=3, power=2, text="When Revealed: Gain +1 mana next turn.", ability="apollo" },
+    { id="apollo",     name="Apollo",     cost=3, power=2, text="When Revealed: Gain +2 mana next turn.", ability="apollo" },
     { id="nyx",        name="Hades",        cost=7, power=3, text="When Revealed: Gain +2 power for each card in your discard pile.", ability="hades" },
     { id="daedalus",   name="Daedalus",   cost=5, power=3, text="When Revealed: Add a Wooden Cow to each other location.", ability="daedalus" },
     { id="helios",     name="Ares",     cost=6, power=4,text="When Revealed: Gain +2 power for each enemy card here.", ability="ares" },
