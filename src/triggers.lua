@@ -58,18 +58,28 @@ triggers.hermes = function(card, game)
         end
         if currentLoc then break end
     end
-    -- Find a new location
-    local newLoc = nil
-    for loc = 1, 3 do
-        if loc ~= currentLoc and #game.board.slots[card.ownerId][loc] < game.board.maxSlots then
-            newLoc = loc
-            break
+    
+    if currentLoc then
+        -- Find all possible valid locations
+        local possible = {}
+        for loc = 1, 3 do
+            if loc ~= currentLoc and #game.board.slots[card.ownerId][loc] < game.board.maxSlots then
+                table.insert(possible, loc)
+            end
         end
-    end
-    if newLoc then
-        -- Remove from current location and add to new location
-        table.remove(game.board.slots[card.ownerId][currentLoc], currentIndex)
-        table.insert(game.board.slots[card.ownerId][newLoc], card)
+        
+        -- If there are valid locations, move to a random one
+        if #possible > 0 then
+            local newLoc = possible[math.random(#possible)]
+            -- Remove from current location
+            table.remove(game.board.slots[card.ownerId][currentLoc], currentIndex)
+            -- Add to new location
+            table.insert(game.board.slots[card.ownerId][newLoc], card)
+            -- Ensure card ownership is maintained
+            card.ownerId = card.ownerId
+            game.gameLog:addEntry(string.format("%s's Hermes moved from location %d to location %d", 
+                card.ownerId == 1 and "Player" or "Enemy", currentLoc, newLoc))
+        end
     end
 end
 

@@ -185,6 +185,17 @@ function Game:nextPhase()
                 for i = #self.board.slots[pid][loc], 1, -1 do
                     local card = self.board.slots[pid][loc][i]
                     if card and card.def then
+                        -- Apply any triggers for the card
+                        if card.def.ability then
+                            local triggers = require("src/triggers")
+                            local triggerFn = triggers[card.def.ability]
+                            if triggerFn then
+                                self.gameLog:addEntry(string.format("%s's %s ability triggers", 
+                                    pid == 1 and "Player" or "Enemy", card.def.name))
+                                triggerFn(card, self)
+                            end
+                        end
+
                         if card.def.id == "helios" then
                             -- Discard Helios
                             self.players[pid].deck:discard(card)
@@ -237,7 +248,8 @@ function Game:nextPhase()
             -- Start next turn
             self.turn = self.turn + 1
             for _, p in ipairs(self.players) do
-                p.mana = self.turn
+                p.mana = self.turn + (p.nextTurnMana or 0)  -- Apply nextTurnMana bonus
+                p.nextTurnMana = 0  -- Reset nextTurnMana
             end
             self.state = "staging"
             self.gameLog:addEntry(string.format("Turn %d begins", self.turn))
