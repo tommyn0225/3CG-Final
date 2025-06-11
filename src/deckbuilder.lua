@@ -108,7 +108,7 @@ function DeckBuilder.draw()
     
     -- Draw available cards list in 2 columns
     local y = PADDING + 80
-    local columnWidth = (PANEL_WIDTH - 30) / 2  -- 30 for padding between columns
+    local columnWidth = (PANEL_WIDTH - 30) / 2
     local cardsPerColumn = math.ceil(#constants.CARD_DEFS / 2)
     
     for i, def in ipairs(constants.CARD_DEFS) do
@@ -129,7 +129,6 @@ function DeckBuilder.draw()
         end
     end
     
-    -- Draw right panel (Your Deck)
     love.graphics.setColor(0.2, 0.2, 0.2, 1)
     love.graphics.rectangle("fill", windowWidth - PANEL_WIDTH - PADDING, PADDING + 40, 
         PANEL_WIDTH, windowHeight - 2 * PADDING - 40)
@@ -167,7 +166,6 @@ function DeckBuilder.draw()
     love.graphics.print("Back", PADDING + 20, buttonY + 10)
     love.graphics.print("Start Game", windowWidth - BUTTON_WIDTH - PADDING + 20, buttonY + 10)
     
-    -- Draw validation message
     if not DeckBuilder.validate() then
         love.graphics.setColor(1, 0.3, 0.3, 1)
         love.graphics.print("Deck must contain exactly 20 cards", 
@@ -179,7 +177,6 @@ function DeckBuilder.mousepressed(x, y, button)
     local windowWidth = love.graphics.getWidth()
     local windowHeight = love.graphics.getHeight()
     
-    -- Check left panel clicks (add cards)
     if x > PADDING and x < PADDING + PANEL_WIDTH and 
        y > PADDING + 80 and y < windowHeight - PADDING - BUTTON_HEIGHT then
         local columnWidth = (PANEL_WIDTH - 30) / 2
@@ -193,7 +190,6 @@ function DeckBuilder.mousepressed(x, y, button)
         end
     end
     
-    -- Check right panel clicks (remove cards)
     if x > windowWidth - PANEL_WIDTH - PADDING and x < windowWidth - PADDING and 
        y > PADDING + 80 and y < windowHeight - PADDING - BUTTON_HEIGHT then
         local index = math.floor((y - PADDING - 80) / SLOT_HEIGHT) + 1
