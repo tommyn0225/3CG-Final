@@ -45,7 +45,6 @@ end
 
 -- Hermes: Moves to another location.
 triggers.hermes = function(card, game)
-    -- Find current location
     local currentLoc = nil
     local currentIndex = nil
     for loc = 1, 3 do
@@ -60,7 +59,6 @@ triggers.hermes = function(card, game)
     end
     
     if currentLoc then
-        -- Find all possible valid locations
         local possible = {}
         for loc = 1, 3 do
             if loc ~= currentLoc and #game.board.slots[card.ownerId][loc] < game.board.maxSlots then
@@ -68,14 +66,10 @@ triggers.hermes = function(card, game)
             end
         end
         
-        -- If there are valid locations, move to a random one
         if #possible > 0 then
             local newLoc = possible[math.random(#possible)]
-            -- Remove from current location
             table.remove(game.board.slots[card.ownerId][currentLoc], currentIndex)
-            -- Add to new location
             table.insert(game.board.slots[card.ownerId][newLoc], card)
-            -- Ensure card ownership is maintained
             card.ownerId = card.ownerId
             game.gameLog:addEntry(string.format("%s's Hermes moved from location %d to location %d", 
                 card.ownerId == 1 and "Player" or "Enemy", currentLoc, newLoc))
@@ -162,11 +156,10 @@ triggers.daedalus = function(card, game)
         if currentLoc then break end
     end
     if currentLoc then
-        -- Add Wooden Cow to other locations
         for loc = 1, 3 do
             if loc ~= currentLoc and #game.board.slots[card.ownerId][loc] < game.board.maxSlots then
                 local Card = require "src/card"
-                local woodenCow = Card.new(require("src/constants").CARD_DEFS[1]) -- Wooden Cow is first in CARD_DEFS
+                local woodenCow = Card.new(require("src/constants").CARD_DEFS[1])
                 woodenCow.ownerId = card.ownerId
                 table.insert(game.board.slots[card.ownerId][loc], woodenCow)
             end

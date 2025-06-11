@@ -25,7 +25,7 @@ end
 function Player:drawTurnCard()
     if #self.hand < 7 and #self.deck.cards > 0 then
         local card = self.deck:drawOne()
-        card.ownerId = self.id  -- Set owner ID when drawing
+        card.ownerId = self.id
         table.insert(self.hand, card)
     end
 end
@@ -37,8 +37,7 @@ end
 function Player:playCard(card, locIdx, board)
     if self:canPlay(card) and #board.slots[self.id][locIdx] < board.maxSlots then
         self.mana = self.mana - card.cost
-        card.ownerId = self.id  -- Set owner ID when playing
-        -- Only flip face up for player turn
+        card.ownerId = self.id
         card:flip(self.id == 1)
         board:placeCard(self.id, locIdx, card)
         return true
@@ -47,7 +46,6 @@ function Player:playCard(card, locIdx, board)
 end
 
 function Player:returnCardToHand(card, board)
-    -- Find the card in the board
     local foundLoc = nil
     local foundIndex = nil
     for loc = 1, 3 do
@@ -62,10 +60,8 @@ function Player:returnCardToHand(card, board)
     end
     
     if foundLoc then
-        -- Remove from board and add to hand
         table.remove(board.slots[self.id][foundLoc], foundIndex)
         table.insert(self.hand, card)
-        -- Refund the mana cost
         self.mana = self.mana + card.cost
         return true
     end
@@ -73,15 +69,11 @@ function Player:returnCardToHand(card, board)
 end
 
 function Player:moveCardOnBoard(card, fromLoc, fromSlot, toLoc, toSlot, board)
-    -- Check if we have enough mana to play the card
     if not self:canPlay(card) then
         return false
     end
     
-    -- Remove from old position
     table.remove(board.slots[self.id][fromLoc], fromSlot)
-    
-    -- Add to new position
     table.insert(board.slots[self.id][toLoc], toSlot, card)
     
     return true
@@ -105,11 +97,9 @@ function Player:stageRandom(board)
         if #choices > 0 then
             available = true
             local card = choices[math.random(#choices)]
-            -- Remove from hand
             for i,c in ipairs(self.hand) do
                 if c == card then table.remove(self.hand, i); break end
             end
-            -- Pick a random valid location
             local locs = {}
             for loc=1,3 do
                 if #board.slots[self.id][loc] < board.maxSlots then
@@ -117,8 +107,8 @@ function Player:stageRandom(board)
                 end
             end
             local loc = locs[math.random(#locs)]
-            card.ownerId = self.id  -- Set owner ID when playing
-            card:flip(false)  -- Keep face down during staging
+            card.ownerId = self.id
+            card:flip(false)
             board:placeCard(self.id, loc, card)
             self.mana = self.mana - card.cost
         end
