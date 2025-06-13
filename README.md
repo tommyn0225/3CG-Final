@@ -1,4 +1,4 @@
-3CG - Mythic Clash - CMPM121 Spr25- Tommy Nguyen
+3CG - Mythic Clash - CMPM121 Spr25- Tommy Nguyen & Sean Massa
 
 Programming Patterns:
 
@@ -24,12 +24,11 @@ For final project, refer to Postmortem.pdf
 GAMEPLAY ADDITIONS/CHANGES:
 
 - you can discard cards from your hand to free up space (1 card per turn)
-    there are some cards that have abilities that depend on discard. The project instructions
-    don't really detail much about how cards are discarded so I'm taking some creative liberties.
-
-- added seperate debug mode for extensive testing purposes
-
-
+  there are some cards that have abilities that depend on discard.
+- The project instructions don't really detail much about how cards are discarded so we're taking some creative liberties and having cards discard after that turn's reveal phase is over.
+  This will allow more cards to be cycled through play and we feel it gives some originality to our game.
+- added deck builder to build a custom deck for play
+- added game log to show the turn status
 --------------------
 CREDITS 
 
