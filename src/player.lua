@@ -34,13 +34,28 @@ function Player:canPlay(card)
     return card.cost <= self.mana
 end
 
-function Player:playCard(card, locIdx, board)
-    if self:canPlay(card) and #board.slots[self.id][locIdx] < board.maxSlots then
-        self.mana = self.mana - card.cost
-        card.ownerId = self.id
-        card:flip(self.id == 1)
-        board:placeCard(self.id, locIdx, card)
-        return true
+function Player:playCard(card, x, y, board)
+    local w, h = love.graphics.getWidth(), love.graphics.getHeight()
+    local laneGap = w * 0.02
+    local laneW = (w - 4 * laneGap) / 3
+    local laneY = h * 0.15
+    local laneH = h * 0.55
+    local rowY = laneY + laneH - (h * 0.2)
+    local CARD_W = (laneW - (board.maxSlots - 1) * laneGap) / board.maxSlots
+
+    -- Determine which location the card was dropped in
+    for loc = 1, 3 do
+        local laneX = laneGap + (loc - 1) * (laneW + laneGap)
+        if x > laneX and x < laneX + laneW and y > rowY and y < rowY + (h * 0.2) then
+            -- Check if the player can afford the card
+            if self:canPlay(card) and #board.slots[self.id][loc] < board.maxSlots then
+                self.mana = self.mana - card.cost
+                card.ownerId = self.id
+                card:flip(true)
+                board:placeCard(self.id, loc, card)
+                return true
+            end
+        end
     end
     return false
 end
