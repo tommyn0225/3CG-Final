@@ -15,7 +15,10 @@ Brian: said that the game works well and also suggested the same things as Andy.
 
 Kyle: enjoyed playtesting my game and said everything works well. He critiqued the visual clarity of the game as some things can be lost in translation. He also pointed out that having to constantly click next can sort of make the game feel slow but that is a preference thing.
 
+FROM PROJECT 3:
 Postmortem: I think I did well on mimicking the features present in Google's Solitaire hard mode. I struggled a lot on figuring out how to get the cards to only be placed down on valid play spots. If I were to do this again, I'd make a nicer UI.
+
+For final project, refer to Postmortem.pdf
 
 --------------------
 GAMEPLAY ADDITIONS/CHANGES:
@@ -30,5 +33,6 @@ GAMEPLAY ADDITIONS/CHANGES:
 --------------------
 CREDITS 
 
-Code: Tommy Nguyen
+Code: Tommy Nguyen and Sean Massa
 Art: drawn by Tommy Nguyen
+
